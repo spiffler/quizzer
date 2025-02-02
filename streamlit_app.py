@@ -6,19 +6,24 @@ openai.api_key = st.secrets["openai_api_key"]
 
 # Function to generate a quiz question
 def generate_question(category):
-    prompt = f"Generate a multiple-choice quiz question about {category}. Provide the question and answer without explanation."
-    response = openai.chat.completions.create(
-    model="gpt-4-turbo",
-    messages=[{"role": "system", "content": prompt}]
-    )
-    return response.choices[0].message.content.strip()
+    try:
+        prompt = f"Generate a multiple-choice quiz question about {category}. Provide the question and answer without explanation."
+        response = openai.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "system", "content": prompt}]
+        )
+        return response.choices[0].message.content.strip()
+    except openai.error.RateLimitError:
+        return "OpenAI API quota exceeded. Please check your billing settings."
+    except openai.error.OpenAIError as e:
+        return f"An error occurred: {str(e)}"
 
 
 # Function to get additional information
 def get_more_info(question):
     prompt = f"Give a detailed explanation and background for this question: {question}"
     response = openai.chat.completions.create(
-    model="gpt-4-turbo",
+    model="gpt-3.5-turbo",
     messages=[{"role": "system", "content": prompt}]
     )
     return response.choices[0].message.content.strip()
