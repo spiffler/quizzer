@@ -7,20 +7,22 @@ openai.api_key = st.secrets["openai_api_key"]
 # Function to generate a quiz question
 def generate_question(category):
     prompt = f"Generate a multiple-choice quiz question about {category}. Provide the question and answer without explanation."
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[{"role": "system", "content": prompt}]
+    response = openai.chat.completions.create(
+    model="gpt-4-turbo",
+    messages=[{"role": "system", "content": prompt}]
     )
-    return response["choices"][0]["message"]["content"].strip()
+    return response.choices[0].message.content.strip()
+
 
 # Function to get additional information
 def get_more_info(question):
     prompt = f"Give a detailed explanation and background for this question: {question}"
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[{"role": "system", "content": prompt}]
+    response = openai.chat.completions.create(
+    model="gpt-4-turbo",
+    messages=[{"role": "system", "content": prompt}]
     )
-    return response["choices"][0]["message"]["content"].strip()
+    return response.choices[0].message.content.strip()
+
 
 # Streamlit UI
 st.title("Mythology & Cricket Quiz")
