@@ -107,27 +107,29 @@ if st.session_state.get("question"):
     st.write("### Question:")
     st.write(st.session_state["question"])
 
-    # Timer
-    if st.session_state["timer_running"]:
-        with st.empty():
-            while st.session_state["time_left"] > 0 and st.session_state["user_answer"] is None:
-                st.write(f"**Time Left: {st.session_state['time_left']} seconds**")
-                time.sleep(1)
-                st.session_state["time_left"] -= 1
-
-            st.session_state["timer_running"] = False
-
-    # Display multiple-choice options with color feedback
+    # Display multiple-choice options immediately
     user_choice = st.radio("Select your answer:", st.session_state["options"], index=None)
 
+    # Timer runs in the background without hiding the choices
+    if st.session_state["timer_running"]:
+        timer_placeholder = st.empty()
+        while st.session_state["time_left"] > 0 and st.session_state["user_answer"] is None:
+            timer_placeholder.write(f"⏳ **Time Left: {st.session_state['time_left']} seconds**")
+            time.sleep(1)
+            st.session_state["time_left"] -= 1
+
+        st.session_state["timer_running"] = False
+        timer_placeholder.write("⏳ **Time Over!**" if st.session_state["user_answer"] is None else "")
+
+    # Handle answer selection
     if user_choice:
         st.session_state["user_answer"] = user_choice
 
         if user_choice.startswith(st.session_state["correct_answer"]):
-            st.markdown(f"<p style='color: green; font-size: 18px;'>✅ Correct!</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='color: green; font-size: 18px;'>✅ Was an easy question anyways!</p>", unsafe_allow_html=True)
             st.session_state["score"] += 1
         else:
-            st.markdown(f"<p style='color: red; font-size: 18px;'>❌ Incorrect! The correct answer is {st.session_state['correct_answer']}.</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='color: red; font-size: 18px;'>❌ Incorrect BITCH! You wouldn't have got it anyways! The correct answer is {st.session_state['correct_answer']}.</p>", unsafe_allow_html=True)
 
     # "Say More" button
     if st.button("Say More"):
