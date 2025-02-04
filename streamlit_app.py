@@ -6,6 +6,32 @@ import threading
 # ✅ Load API Key from Streamlit Secrets
 openai.api_key = st.secrets["openai_api_key"]
 
+# ✅ Ensure session state variables are initialized
+if "asked_questions" not in st.session_state:
+    st.session_state["asked_questions"] = set()
+if "score" not in st.session_state:
+    st.session_state["score"] = 0
+if "total_questions" not in st.session_state:
+    st.session_state["total_questions"] = 0
+if "question" not in st.session_state:
+    st.session_state["question"] = ""
+if "options" not in st.session_state:
+    st.session_state["options"] = []
+if "correct_answer" not in st.session_state:
+    st.session_state["correct_answer"] = ""
+if "user_answer" not in st.session_state:
+    st.session_state["user_answer"] = None
+if "show_answer" not in st.session_state:
+    st.session_state["show_answer"] = False
+if "result_message" not in st.session_state:
+    st.session_state["result_message"] = ""
+if "timer_running" not in st.session_state:
+    st.session_state["timer_running"] = False
+if "time_left" not in st.session_state:
+    st.session_state["time_left"] = 10
+if "timer_start" not in st.session_state:
+    st.session_state["timer_start"] = None
+
 # API Usage Tracking
 class APIUsageTracker:
     def __init__(self, max_calls_per_minute=20):
