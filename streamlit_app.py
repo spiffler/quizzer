@@ -1,6 +1,5 @@
 import streamlit as st
 import openai
-import time
 import threading
 
 # ✅ Load API Key from Streamlit Secrets
@@ -21,16 +20,8 @@ if "correct_answer" not in st.session_state:
     st.session_state["correct_answer"] = ""
 if "user_answer" not in st.session_state:
     st.session_state["user_answer"] = None
-if "show_answer" not in st.session_state:
-    st.session_state["show_answer"] = False
 if "result_message" not in st.session_state:
     st.session_state["result_message"] = ""
-if "timer_running" not in st.session_state:
-    st.session_state["timer_running"] = False
-if "time_left" not in st.session_state:
-    st.session_state["time_left"] = 10
-if "timer_start" not in st.session_state:
-    st.session_state["timer_start"] = None
 if "extra_info" not in st.session_state:
     st.session_state["extra_info"] = ""  # ✅ Store extra explanation
 
@@ -102,12 +93,17 @@ def generate_question(category):
         st.error(f"Question generation error: {e}")
         return "An error occurred", ["A) Error", "B) Error", "C) Error", "D) Error"], "N/A"
 
-# ✅ Function to get additional information
-def get_more_info(question):
+# ✅ Function to get additional information, focusing on the correct answer
+def get_more_info(correct_answer, question):
     try:
         api_tracker.track_call()  # Track API usage
 
-        prompt = f"Provide an informative explanation for this quiz question: {question}"
+        prompt = (
+            f"Provide an informative explanation specifically for the correct answer '{correct_answer}' "
+            f"from this multiple-choice quiz question: '{question}'. "
+            "Ensure the explanation directly relates to why this answer is correct."
+        )
+
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo-0125",
             messages=[{"role": "user", "content": prompt}],
@@ -127,11 +123,7 @@ def reset_question_state():
     st.session_state["options"] = []
     st.session_state["correct_answer"] = ""
     st.session_state["user_answer"] = None
-    st.session_state["show_answer"] = False
     st.session_state["result_message"] = ""
-    st.session_state["timer_running"] = False
-    st.session_state["time_left"] = 10
-    st.session_state["timer_start"] = None  # Ensure fresh timer start
     st.session_state["extra_info"] = ""  # ✅ Reset additional explanation
 
 # Scoreboard
@@ -150,8 +142,6 @@ if st.button("Generate Question"):
     st.session_state["options"] = options
     st.session_state["correct_answer"] = correct_answer
     st.session_state["total_questions"] = st.session_state.get("total_questions", 0) + 1
-    st.session_state["timer_running"] = True
-    st.session_state["timer_start"] = time.time()  # Store start time
 
 # Show the question
 if st.session_state.get("question"):
@@ -166,21 +156,9 @@ if st.session_state.get("question"):
         key=f"question_{st.session_state['total_questions']}"
     )
 
-    # Timer Logic
-    if st.session_state["timer_running"]:
-        elapsed_time = int(time.time() - st.session_state["timer_start"])
-        st.session_state["time_left"] = max(0, 10 - elapsed_time)
-
-        if st.session_state["time_left"] == 0:
-            st.session_state["timer_running"] = False
-            st.warning("⏳ **Time Over!**")
-
-        st.markdown(f"**⏳ Time Left: {st.session_state['time_left']} seconds**")
-
     # Process user answer
     if user_choice and st.session_state["user_answer"] is None:
         st.session_state["user_answer"] = user_choice
-        st.session_state["timer_running"] = False
 
         if user_choice.startswith(st.session_state["correct_answer"]):
             st.session_state["result_message"] = "<p style='color: green; font-size: 18px;'>✅ Correct!</p>"
@@ -191,9 +169,9 @@ if st.session_state.get("question"):
     if st.session_state.get("result_message"):
         st.markdown(st.session_state["result_message"], unsafe_allow_html=True)
 
-    # ✅ "Say More" Button
+    # ✅ "Say More" Button (Now with correct explanation)
     if st.button("Say More"):
-        st.session_state["extra_info"] = get_more_info(st.session_state["question"])
+        st.session_state["extra_info"] = get_more_info(st.session_state["correct_answer"], st.session_state["question"])
 
     if st.session_state["extra_info"]:
         st.write("### More Info:")
