@@ -1,16 +1,14 @@
 import streamlit as st
 import openai
-import random
 import time
 
 # Load API Key from Streamlit Secrets
 openai.api_key = st.secrets["openai_api_key"]
 
-# Initialize session state for question history
+# Initialize session state for tracking progress
 if "asked_questions" not in st.session_state:
     st.session_state["asked_questions"] = set()
 
-# Initialize session state for quiz mechanics
 st.session_state.setdefault("question", "")
 st.session_state.setdefault("options", [])
 st.session_state.setdefault("correct_answer", "")
@@ -25,7 +23,6 @@ st.session_state.setdefault("timer_running", False)
 # Function to generate a unique multiple-choice quiz question
 def generate_question(category):
     try:
-        # Prompt for a unique multiple-choice question with four answer options
         prompt = (
             f"Generate a unique and creative multiple-choice quiz question about {category}. "
             "Ensure that the question is different from common ones, covering lesser-known aspects. "
@@ -41,37 +38,38 @@ def generate_question(category):
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo-0125",
             messages=[{"role": "user", "content": prompt}],
-            temperature=1.0  # Increase randomness for variety
+            temperature=1.0
         )
 
         qa_text = response.choices[0].message.content.strip()
-
-        # Parse the response into question, options, and answer
         lines = qa_text.split("\n")
+
+        # Ensure correct formatting is enforced
+        if len(lines) < 6:
+            return "Error generating question.", ["A) Error", "B) Error", "C) Error", "D) Error"], "N/A"
+
         question = lines[0].replace("Q: ", "").strip()
-        options = [line.strip() for line in lines[1:5]]  # Extracts A, B, C, D choices
+        options = [lines[1].strip(), lines[2].strip(), lines[3].strip(), lines[4].strip()]
         correct_answer = lines[5].replace("Correct Answer:", "").strip()
 
-        # Ensure no repeated questions
+        # Prevent repeat questions
         if question in st.session_state["asked_questions"]:
-            return generate_question(category)  # Retry for a new question
+            return generate_question(category)
 
-        # Store the new question to prevent repetition
         st.session_state["asked_questions"].add(question)
-
         return question, options, correct_answer
 
     except openai.OpenAIError as e:
-        return f"An error occurred: {str(e)}", ["Error retrieving options"], "N/A"
+        return f"An error occurred: {str(e)}", ["A) Error", "B) Error", "C) Error", "D) Error"], "N/A"
 
-# Function to get additional information
+# Function to fetch additional explanation
 def get_more_info(question):
     try:
-        prompt = f"Give a detailed explanation and background for this quiz question: {question}"
+        prompt = f"Provide an informative explanation for this quiz question: {question}"
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo-0125",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.8  # Slightly lower randomness for accuracy
+            temperature=0.8
         )
         return response.choices[0].message.content.strip()
     except openai.OpenAIError as e:
@@ -80,13 +78,13 @@ def get_more_info(question):
 # Streamlit UI
 st.title("Mythology & Cricket Quiz")
 
-# Display Scoreboard
+# Scoreboard
 st.markdown(f"**Score: {st.session_state['score']} / {st.session_state['total_questions']}**")
 
 # Select category
 category = st.selectbox("Choose a category:", ["Hindu Mythology", "Cricket"], index=0)
 
-# Generate question button
+# Generate question
 if st.button("Generate Question"):
     question, options, correct_answer = generate_question(category)
 
@@ -97,32 +95,34 @@ if st.button("Generate Question"):
     st.session_state["show_answer"] = False
     st.session_state["extra_info"] = ""
     st.session_state["total_questions"] += 1
-
-    # Start Timer
     st.session_state["time_left"] = 10
     st.session_state["timer_running"] = True
 
-# Display the question and options
+# Show the question
 if st.session_state.get("question"):
     st.write("### Question:")
     st.write(st.session_state["question"])
 
-    # Display multiple-choice options immediately
+    # Display multiple-choice options
     user_choice = st.radio("Select your answer:", st.session_state["options"], index=None)
 
-    # Timer runs in the background without hiding the choices
-    if st.session_state["timer_running"]:
+    # Timer runs only if no answer has been selected
+    if st.session_state["timer_running"] and st.session_state["user_answer"] is None:
         timer_placeholder = st.empty()
-        while st.session_state["time_left"] > 0 and st.session_state["user_answer"] is None:
-            timer_placeholder.write(f"⏳ **Time Left: {st.session_state['time_left']} seconds**")
+        for _ in range(st.session_state["time_left"]):
             time.sleep(1)
             st.session_state["time_left"] -= 1
+            timer_placeholder.write(f"⏳ **Time Left: {st.session_state['time_left']} seconds**")
+
+            # Stop timer if answer is selected
+            if st.session_state["user_answer"] is not None:
+                break
 
         st.session_state["timer_running"] = False
         timer_placeholder.write("⏳ **Time Over!**" if st.session_state["user_answer"] is None else "")
 
-    # Handle answer selection
-    if user_choice:
+    # Process user answer
+    if user_choice and st.session_state["user_answer"] is None:
         st.session_state["user_answer"] = user_choice
 
         if user_choice.startswith(st.session_state["correct_answer"]):
@@ -131,7 +131,10 @@ if st.session_state.get("question"):
         else:
             st.markdown(f"<p style='color: red; font-size: 18px;'>❌ Incorrect BITCH! You wouldn't have got it anyways! The correct answer is {st.session_state['correct_answer']}.</p>", unsafe_allow_html=True)
 
-    # "Say More" button
+        # Stop the timer when an answer is selected
+        st.session_state["timer_running"] = False
+
+    # "Say More" button for additional context
     if st.button("Say More"):
         st.session_state["extra_info"] = get_more_info(st.session_state["question"])
 
