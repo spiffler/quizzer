@@ -3,6 +3,9 @@ import openai
 import time
 import threading
 
+# ✅ Load API Key from Streamlit Secrets
+openai.api_key = st.secrets["openai_api_key"]
+
 # API Usage Tracking
 class APIUsageTracker:
     def __init__(self, max_calls_per_minute=20):
