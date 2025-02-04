@@ -56,10 +56,12 @@ def generate_question(category):
         api_tracker.track_call()  # Track API usage
 
         prompt = (
-            f"Generate a unique multiple-choice quiz question about {category}. "
-            "Ensure the question is different from common ones. "
+            f"Generate a difficult multiple-choice quiz question about {category}. "
+            "Ensure the question is unique and goes beyond basic facts. "
+            "Focus on lesser-known, advanced, or deeper aspects of the topic. "
+            "Make the question require conceptual thinking, historical references, or connections between ideas. "
             "Format strictly as:\n\n"
-            "Q: <question>\n"
+            "Q: <challenging question>\n"
             "A) <option 1>\n"
             "B) <option 2>\n"
             "C) <option 3>\n"
@@ -70,7 +72,7 @@ def generate_question(category):
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo-0125",
             messages=[{"role": "user", "content": prompt}],
-            temperature=1.0
+            temperature=1.2  # 🔥 Increase randomness for more unique questions
         )
 
         qa_text = response.choices[0].message.content.strip()
@@ -92,6 +94,49 @@ def generate_question(category):
     except Exception as e:
         st.error(f"Question generation error: {e}")
         return "An error occurred", ["A) Error", "B) Error", "C) Error", "D) Error"], "N/A"
+
+
+# def generate_question(category):
+#     try:
+#         api_tracker.track_call()  # Track API usage
+
+#         prompt = (
+#             f"Generate a unique multiple-choice quiz question about {category}. "
+#             "Ensure the question is different from common ones. "
+#             "Format strictly as:\n\n"
+#             "Q: <question>\n"
+#             "A) <option 1>\n"
+#             "B) <option 2>\n"
+#             "C) <option 3>\n"
+#             "D) <option 4>\n"
+#             "Correct Answer: <letter of the correct answer>"
+#         )
+
+#         response = openai.chat.completions.create(
+#             model="gpt-3.5-turbo-0125",
+#             messages=[{"role": "user", "content": prompt}],
+#             temperature=1.0
+#         )
+
+#         qa_text = response.choices[0].message.content.strip()
+#         lines = qa_text.split("\n")
+
+#         if len(lines) < 6:
+#             return "Error generating question.", ["A) Error", "B) Error", "C) Error", "D) Error"], "N/A"
+
+#         question = lines[0].replace("Q: ", "").strip()
+#         options = [lines[1].strip(), lines[2].strip(), lines[3].strip(), lines[4].strip()]
+#         correct_answer = lines[5].replace("Correct Answer:", "").strip()
+
+#         if question in st.session_state["asked_questions"]:
+#             return generate_question(category)  # Retry for a unique question
+
+#         st.session_state["asked_questions"].add(question)
+#         return question, options, correct_answer
+
+#     except Exception as e:
+#         st.error(f"Question generation error: {e}")
+#         return "An error occurred", ["A) Error", "B) Error", "C) Error", "D) Error"], "N/A"
 
 # ✅ Function to get additional information, focusing on the correct answer
 def get_more_info(correct_answer, question):
