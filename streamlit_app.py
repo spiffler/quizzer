@@ -56,7 +56,7 @@ def generate_question(category):
         api_tracker.track_call()  # Track API usage
 
         prompt = (
-            f"Generate a difficult multiple-choice quiz question about {category}. "
+            f"Generate a difficult pub-quiz level multiple-choice quiz question about {category}. "
             "Ensure the question is unique and goes beyond basic facts. "
             "Focus on lesser-known, advanced, or deeper aspects of the topic. "
             "Make the question require conceptual thinking, historical references, or connections between ideas. "
