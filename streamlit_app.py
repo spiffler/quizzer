@@ -1,6 +1,7 @@
 import streamlit as st
 import openai
 import random
+import time
 
 # Load API Key from Streamlit Secrets
 openai.api_key = st.secrets["openai_api_key"]
@@ -8,6 +9,18 @@ openai.api_key = st.secrets["openai_api_key"]
 # Initialize session state for question history
 if "asked_questions" not in st.session_state:
     st.session_state["asked_questions"] = set()
+
+# Initialize session state for quiz mechanics
+st.session_state.setdefault("question", "")
+st.session_state.setdefault("options", [])
+st.session_state.setdefault("correct_answer", "")
+st.session_state.setdefault("user_answer", None)
+st.session_state.setdefault("show_answer", False)
+st.session_state.setdefault("extra_info", "")
+st.session_state.setdefault("score", 0)
+st.session_state.setdefault("total_questions", 0)
+st.session_state.setdefault("time_left", 10)
+st.session_state.setdefault("timer_running", False)
 
 # Function to generate a unique multiple-choice quiz question
 def generate_question(category):
@@ -67,12 +80,8 @@ def get_more_info(question):
 # Streamlit UI
 st.title("Mythology & Cricket Quiz")
 
-# Initialize session state variables
-st.session_state.setdefault("question", "")
-st.session_state.setdefault("options", [])
-st.session_state.setdefault("correct_answer", "")
-st.session_state.setdefault("show_answer", False)
-st.session_state.setdefault("extra_info", "")
+# Display Scoreboard
+st.markdown(f"**Score: {st.session_state['score']} / {st.session_state['total_questions']}**")
 
 # Select category
 category = st.selectbox("Choose a category:", ["Hindu Mythology", "Cricket"], index=0)
@@ -80,29 +89,47 @@ category = st.selectbox("Choose a category:", ["Hindu Mythology", "Cricket"], in
 # Generate question button
 if st.button("Generate Question"):
     question, options, correct_answer = generate_question(category)
-    
+
     st.session_state["question"] = question
     st.session_state["options"] = options
     st.session_state["correct_answer"] = correct_answer
+    st.session_state["user_answer"] = None
     st.session_state["show_answer"] = False
     st.session_state["extra_info"] = ""
+    st.session_state["total_questions"] += 1
+
+    # Start Timer
+    st.session_state["time_left"] = 10
+    st.session_state["timer_running"] = True
 
 # Display the question and options
 if st.session_state.get("question"):
     st.write("### Question:")
     st.write(st.session_state["question"])
 
-    # Display multiple-choice options
-    for option in st.session_state["options"]:
-        st.write(option)
+    # Timer
+    if st.session_state["timer_running"]:
+        with st.empty():
+            while st.session_state["time_left"] > 0 and st.session_state["user_answer"] is None:
+                st.write(f"**Time Left: {st.session_state['time_left']} seconds**")
+                time.sleep(1)
+                st.session_state["time_left"] -= 1
 
-    if st.button("Show Answer"):
-        st.session_state["show_answer"] = True
+            st.session_state["timer_running"] = False
 
-    if st.session_state["show_answer"]:
-        st.write("### Correct Answer:")
-        st.write(f"**{st.session_state['correct_answer']}**")
+    # Display multiple-choice options with color feedback
+    user_choice = st.radio("Select your answer:", st.session_state["options"], index=None)
 
+    if user_choice:
+        st.session_state["user_answer"] = user_choice
+
+        if user_choice.startswith(st.session_state["correct_answer"]):
+            st.markdown(f"<p style='color: green; font-size: 18px;'>✅ Correct!</p>", unsafe_allow_html=True)
+            st.session_state["score"] += 1
+        else:
+            st.markdown(f"<p style='color: red; font-size: 18px;'>❌ Incorrect! The correct answer is {st.session_state['correct_answer']}.</p>", unsafe_allow_html=True)
+
+    # "Say More" button
     if st.button("Say More"):
         st.session_state["extra_info"] = get_more_info(st.session_state["question"])
 
