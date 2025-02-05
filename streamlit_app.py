@@ -206,7 +206,7 @@ if st.session_state.get("question"):
         st.session_state["user_answer"] = user_choice
 
         if user_choice.startswith(st.session_state["correct_answer"]):
-            st.session_state["result_message"] = "<p style='color: green; font-size: 18px;'>✅ Correfct! </p>"
+            st.session_state["result_message"] = "<p style='color: green; font-size: 18px;'>✅ Correct! </p>"
             st.session_state["score"] += 1
         else:
             st.session_state["result_message"] = f"<p style='color: red; font-size: 18px;'>❌ Incorrect - The correct answer is {st.session_state['correct_answer']}.</p>"
