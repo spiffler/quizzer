@@ -175,7 +175,7 @@ def reset_question_state():
 st.markdown(f"**Score: {st.session_state.get('score', 0)} / {st.session_state.get('total_questions', 0)}**")
 
 # Select category
-category = st.selectbox("Choose a category:", ["Business Trivia","Bollywood","Science","Hindu Mythology", "Cricket"], index=0)
+category = st.selectbox("Choose a category:", ["Business Trivia","Bollywood","Science","Hindu Mythology", "Cricket", "Music", "Sports", "Trivia"], index=0)
 
 # Generate question
 if st.button("Generate Question"):
