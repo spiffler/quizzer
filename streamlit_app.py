@@ -70,9 +70,9 @@ def generate_question(category):
         )
 
         response = openai.chat.completions.create(
-            model="gpt-3.5-turbo-0125",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
-            temperature=1.2  # 🔥 Increase randomness for more unique questions
+            temperature=1  # 🔥 Increase randomness for more unique questions
         )
 
         qa_text = response.choices[0].message.content.strip()
@@ -113,7 +113,7 @@ def generate_question(category):
 #         )
 
 #         response = openai.chat.completions.create(
-#             model="gpt-3.5-turbo-0125",
+#             model="gpt-4o-mini",
 #             messages=[{"role": "user", "content": prompt}],
 #             temperature=1.0
 #         )
@@ -150,9 +150,9 @@ def get_more_info(correct_answer, question):
         )
 
         response = openai.chat.completions.create(
-            model="gpt-3.5-turbo-0125",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.8
+            temperature=1
         )
 
         return response.choices[0].message.content.strip()
@@ -206,10 +206,10 @@ if st.session_state.get("question"):
         st.session_state["user_answer"] = user_choice
 
         if user_choice.startswith(st.session_state["correct_answer"]):
-            st.session_state["result_message"] = "<p style='color: green; font-size: 18px;'>✅ Was an easy question anyways!</p>"
+            st.session_state["result_message"] = "<p style='color: green; font-size: 18px;'>✅ Correfct! </p>"
             st.session_state["score"] += 1
         else:
-            st.session_state["result_message"] = f"<p style='color: red; font-size: 18px;'>❌ Incorrect BITCH! You wouldn't have known it anyways! The correct answer is {st.session_state['correct_answer']}.</p>"
+            st.session_state["result_message"] = f"<p style='color: red; font-size: 18px;'>❌ Incorrect - The correct answer is {st.session_state['correct_answer']}.</p>"
 
     if st.session_state.get("result_message"):
         st.markdown(st.session_state["result_message"], unsafe_allow_html=True)
